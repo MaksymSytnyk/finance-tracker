@@ -1,0 +1,154 @@
+CREATE TABLE meta (
+    id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
+    revision INTEGER NOT NULL CHECK(revision >= 0),
+    currency TEXT NOT NULL,
+    zone TEXT NOT NULL,
+    theme TEXT NOT NULL
+);
+CREATE TABLE account (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    type TEXT NOT NULL,
+    opening_minor INTEGER NOT NULL,
+    opening_date TEXT NOT NULL,
+    archived INTEGER NOT NULL CHECK(archived IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL CHECK(updated_at >= created_at)
+);
+CREATE TABLE category (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('INCOME', 'EXPENSE')),
+    icon TEXT NOT NULL,
+    color INTEGER NOT NULL,
+    archived INTEGER NOT NULL CHECK(archived IN (0, 1))
+);
+CREATE TABLE financial_transaction (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL CHECK(type IN ('INCOME', 'EXPENSE', 'TRANSFER')),
+    account_id TEXT NOT NULL REFERENCES account(id),
+    currency TEXT NOT NULL,
+    amount_minor INTEGER NOT NULL CHECK(amount_minor > 0),
+    business_date TEXT NOT NULL,
+    category_id TEXT REFERENCES category(id),
+    destination_id TEXT REFERENCES account(id),
+    received_currency TEXT,
+    received_minor INTEGER CHECK(received_minor > 0),
+    description TEXT NOT NULL,
+    tags TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL CHECK(updated_at >= created_at),
+    rate_source TEXT,
+    rate_observed_at INTEGER,
+    notes TEXT NOT NULL DEFAULT '',
+    CHECK((type = 'TRANSFER' AND destination_id IS NOT NULL AND destination_id != account_id AND received_currency IS NOT NULL AND received_minor IS NOT NULL AND category_id IS NULL) OR
+          (type != 'TRANSFER' AND category_id IS NOT NULL AND destination_id IS NULL AND received_currency IS NULL AND received_minor IS NULL))
+);
+CREATE INDEX transaction_date ON financial_transaction(business_date DESC, created_at DESC, id);
+CREATE INDEX transaction_account ON financial_transaction(account_id, business_date);
+CREATE INDEX transaction_destination ON financial_transaction(destination_id, business_date);
+CREATE INDEX transaction_category ON financial_transaction(category_id, currency, business_date);
+CREATE TABLE budget (
+    id TEXT NOT NULL PRIMARY KEY,
+    category_id TEXT NOT NULL REFERENCES category(id),
+    month TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    limit_minor INTEGER NOT NULL CHECK(limit_minor > 0),
+    UNIQUE(category_id, month, currency)
+);
+CREATE TABLE recurring_rule (
+    id TEXT NOT NULL PRIMARY KEY,
+    template TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    interval_count INTEGER NOT NULL CHECK(interval_count BETWEEN 1 AND 365),
+    anchor TEXT NOT NULL,
+    next_index INTEGER NOT NULL CHECK(next_index >= 0),
+    zone TEXT NOT NULL,
+    end_date TEXT,
+    active INTEGER NOT NULL CHECK(active IN (0, 1))
+);
+CREATE TABLE occurrence (
+    rule_id TEXT NOT NULL REFERENCES recurring_rule(id),
+    date TEXT NOT NULL,
+    transaction_id TEXT UNIQUE REFERENCES financial_transaction(id),
+    PRIMARY KEY(rule_id, date)
+);
+CREATE TABLE rate (
+    from_currency TEXT NOT NULL,
+    to_currency TEXT NOT NULL,
+    numerator INTEGER NOT NULL CHECK(numerator > 0),
+    denominator INTEGER NOT NULL CHECK(denominator > 0),
+    observed_at INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    PRIMARY KEY(from_currency, to_currency, observed_at)
+);
+
+selectMeta:
+SELECT * FROM meta WHERE id = 1;
+selectAccounts:
+SELECT * FROM account ORDER BY created_at, id;
+selectCategories:
+SELECT * FROM category ORDER BY name, id;
+selectTransactions:
+SELECT * FROM financial_transaction ORDER BY business_date DESC, created_at DESC, id;
+selectBudgets:
+SELECT * FROM budget;
+selectRules:
+SELECT * FROM recurring_rule;
+selectOccurrences:
+SELECT * FROM occurrence;
+selectRates:
+SELECT * FROM rate;
+
+insertMeta:
+INSERT INTO meta VALUES (1, ?, ?, ?, ?);
+updateMeta:
+UPDATE meta SET revision = ?, currency = ?, zone = ?, theme = ? WHERE id = 1;
+insertAccount:
+INSERT INTO account VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+updateAccount:
+UPDATE account SET name = ?, currency = ?, type = ?, opening_minor = ?, opening_date = ?, archived = ?, created_at = ?, updated_at = ? WHERE id = ?;
+insertCategory:
+INSERT INTO category VALUES (?, ?, ?, ?, ?, ?);
+updateCategory:
+UPDATE category SET name = ?, type = ?, icon = ?, color = ?, archived = ? WHERE id = ?;
+insertTransaction:
+INSERT INTO financial_transaction VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+updateTransaction:
+UPDATE financial_transaction SET type = ?, account_id = ?, currency = ?, amount_minor = ?, business_date = ?, category_id = ?, destination_id = ?, received_currency = ?, received_minor = ?, description = ?, tags = ?, created_at = ?, updated_at = ?, rate_source = ?, rate_observed_at = ?, notes = ? WHERE id = ?;
+insertBudget:
+INSERT INTO budget VALUES (?, ?, ?, ?, ?);
+updateBudget:
+UPDATE budget SET category_id = ?, month = ?, currency = ?, limit_minor = ? WHERE id = ?;
+insertRule:
+INSERT INTO recurring_rule VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+updateRule:
+UPDATE recurring_rule SET template = ?, frequency = ?, interval_count = ?, anchor = ?, next_index = ?, zone = ?, end_date = ?, active = ? WHERE id = ?;
+insertOccurrence:
+INSERT INTO occurrence VALUES (?, ?, ?);
+updateOccurrence:
+UPDATE occurrence SET transaction_id = ? WHERE rule_id = ? AND date = ?;
+insertRate:
+INSERT INTO rate VALUES (?, ?, ?, ?, ?, ?);
+updateRate:
+UPDATE rate SET numerator = ?, denominator = ?, source = ? WHERE from_currency = ? AND to_currency = ? AND observed_at = ?;
+
+deleteTransaction:
+DELETE FROM financial_transaction WHERE id = ?;
+deleteBudget:
+DELETE FROM budget WHERE id = ?;
+clearOccurrences:
+DELETE FROM occurrence;
+clearTransactions:
+DELETE FROM financial_transaction;
+clearBudgets:
+DELETE FROM budget;
+clearRules:
+DELETE FROM recurring_rule;
+clearRates:
+DELETE FROM rate;
+clearAccounts:
+DELETE FROM account;
+clearCategories:
+DELETE FROM category;
