@@ -40,4 +40,4 @@ Backups are versioned JSON snapshots with monetary integers encoded as strings. 
 
 ## Delivery status
 
-The feature implementation and local JVM/SQLite checks are present. SQLDelight generation, full Gradle resolution, Android assembly, iOS compilation, and real-device interaction are still release gates. Source code and CI configuration are not proof that these gates passed. See the exact commands and results in [verification](verification.md).
+The feature implementation and local JVM/SQLite checks are present. SQLDelight generation, full Gradle resolution, Android assembly, iOS compilation, and real-device interaction are still release gates. Source code and recorded local checks are not proof that these gates passed. See the exact commands and results in [verification](verification.md).

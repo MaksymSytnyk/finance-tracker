@@ -1,6 +1,6 @@
 # Verification notes
 
-This repository contains domain, data, presentation, and native-platform tests, plus a GitHub Actions workflow. Their presence alone does not establish a passing build on every target.
+This repository contains domain, data, presentation, and native-platform tests. Their presence alone does not establish a passing build on every target.
 
 ## Local evidence
 
@@ -23,5 +23,3 @@ On macOS with a compatible Xcode installation:
 ./gradlew :domain:iosSimulatorArm64Test :data:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
-
-The CI configuration currently selects Xcode 26.4 explicitly. Its availability on the chosen runner must be checked when running the workflow.

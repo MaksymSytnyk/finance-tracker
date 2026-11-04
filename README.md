@@ -114,7 +114,7 @@ The APK is written to `androidApp/build/outputs/apk/debug/`. To run on an emulat
 
 Open `iosApp/iosApp.xcodeproj` in Xcode, select the `iosApp` scheme, and run on a simulator or configured device. Device builds require your own signing team.
 
-## Tests and CI
+## Tests
 
 Run the JVM domain, persistence, and presentation suites:
 
@@ -124,7 +124,7 @@ Run the JVM domain, persistence, and presentation suites:
 
 The tests cover monetary precision and overflow, rational conversion against a JVM oracle, balances and transfers, recurrence anchors, backup validation, SQLite repository behavior, and ViewModel state transitions.
 
-[GitHub Actions](.github/workflows/ci.yml) is configured to run JVM tests, Android assembly and lint, desktop assembly, and iOS framework and host builds. A checked-in workflow is not a claim that every platform build has passed; see [verification notes](docs/verification.md).
+See the [verification notes](docs/verification.md) for the recorded checks and platform limitations.
 
 ## Scope and trade-offs
 
